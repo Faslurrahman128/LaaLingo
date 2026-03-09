@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="741" height="390" viewBox="0 0 741 390">
+  <rect width="741" height="390" fill="#ffffff"/>
+
+  <!-- red stripes (7 of 13) -->
+  <rect y="0"   width="741" height="30" fill="#b22234"/>
+  <rect y="60"  width="741" height="30" fill="#b22234"/>
+  <rect y="120" width="741" height="30" fill="#b22234"/>
+  <rect y="180" width="741" height="30" fill="#b22234"/>
+  <rect y="240" width="741" height="30" fill="#b22234"/>
+  <rect y="300" width="741" height="30" fill="#b22234"/>
+  <rect y="360" width="741" height="30" fill="#b22234"/>
+
+  <!-- canton -->
+  <rect width="296" height="210" fill="#3c3b6e"/>
+
+  <!-- simplified star field (stylized dots, not exact proportions) -->
+  <g fill="#ffffff">
+    <!-- 9 rows alternating 6/5 -->
+    <g transform="translate(20,18)">
+      <g>
+        <circle cx="0" cy="0" r="5"/>
+        <circle cx="40" cy="0" r="5"/>
+        <circle cx="80" cy="0" r="5"/>
+        <circle cx="120" cy="0" r="5"/>
+        <circle cx="160" cy="0" r="5"/>
+        <circle cx="200" cy="0" r="5"/>
+      </g>
+      <g transform="translate(20,22)">
+        <circle cx="0" cy="0" r="5"/>
+        <circle cx="40" cy="0" r="5"/>
+        <circle cx="80" cy="0" r="5"/>
+        <circle cx="120" cy="0" r="5"/>
+        <circle cx="160" cy="0" r="5"/>
+      </g>
+      <g transform="translate(0,44)">
+        <circle cx="0" cy="0" r="5"/>
+        <circle cx="40" cy="0" r="5"/>
+        <circle cx="80" cy="0" r="5"/>
+        <circle cx="120" cy="0" r="5"/>
+        <circle cx="160" cy="0" r="5"/>
+        <circle cx="200" cy="0" r="5"/>
+      </g>
+      <g transform="translate(20,66)">
+        <circle cx="0" cy="0" r="5"/>
+        <circle cx="40" cy="0" r="5"/>
+        <circle cx="80" cy="0" r="5"/>
+        <circle cx="120" cy="0" r="5"/>
+        <circle cx="160" cy="0" r="5"/>
+      </g>
+      <g transform="translate(0,88)">
+        <circle cx="0" cy="0" r="5"/>
+        <circle cx="40" cy="0" r="5"/>
+        <circle cx="80" cy="0" r="5"/>
+        <circle cx="120" cy="0" r="5"/>
+        <circle cx="160" cy="0" r="5"/>
+        <circle cx="200" cy="0" r="5"/>
+      </g>
+      <g transform="translate(20,110)">
+        <circle cx="0" cy="0" r="5"/>
+        <circle cx="40" cy="0" r="5"/>
+        <circle cx="80" cy="0" r="5"/>
+        <circle cx="120" cy="0" r="5"/>
+        <circle cx="160" cy="0" r="5"/>
+      </g>
+      <g transform="translate(0,132)">
+        <circle cx="0" cy="0" r="5"/>
+        <circle cx="40" cy="0" r="5"/>
+        <circle cx="80" cy="0" r="5"/>
+        <circle cx="120" cy="0" r="5"/>
+        <circle cx="160" cy="0" r="5"/>
+        <circle cx="200" cy="0" r="5"/>
+      </g>
+      <g transform="translate(20,154)">
+        <circle cx="0" cy="0" r="5"/>
+        <circle cx="40" cy="0" r="5"/>
+        <circle cx="80" cy="0" r="5"/>
+        <circle cx="120" cy="0" r="5"/>
+        <circle cx="160" cy="0" r="5"/>
+      </g>
+      <g transform="translate(0,176)">
+        <circle cx="0" cy="0" r="5"/>
+        <circle cx="40" cy="0" r="5"/>
+        <circle cx="80" cy="0" r="5"/>
+        <circle cx="120" cy="0" r="5"/>
+        <circle cx="160" cy="0" r="5"/>
+        <circle cx="200" cy="0" r="5"/>
+      </g>
+    </g>
+  </g>
+</svg>
