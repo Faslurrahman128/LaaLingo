@@ -36,18 +36,19 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     if (widget.accessToken.isNotEmpty && widget.refreshToken.isNotEmpty) {
       try {
         final supabase = Supabase.instance.client;
-        await supabase.auth.setSession(
-          AccessTokenResponse(
-            accessToken: widget.accessToken,
-            refreshToken: widget.refreshToken,
-            tokenType: 'bearer',
-            expiresIn: 3600,
-            user: null,
-          ),
+        final response = await supabase.auth.setSession(
+          widget.accessToken,
+          widget.refreshToken,
         );
-        setState(() {
-          _sessionReady = true;
-        });
+        if (response.session != null && response.user != null) {
+          setState(() {
+            _sessionReady = true;
+          });
+        } else {
+          setState(() {
+            _error = 'Could not authenticate reset session.';
+          });
+        }
       } catch (e) {
         setState(() {
           _error = 'Could not authenticate reset session.';
