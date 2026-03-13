@@ -53,12 +53,16 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           initialRoute: '/',
           onGenerateRoute: (settings) {
-            // Handle /reset-password?access_token=...
+            // Handle /reset-password?access_token=...&refresh_token=...
             if (settings.name != null && settings.name!.startsWith('/reset-password')) {
               final uri = Uri.parse(settings.name!);
               final accessToken = uri.queryParameters['access_token'] ?? '';
+              final refreshToken = uri.queryParameters['refresh_token'] ?? '';
               return MaterialPageRoute(
-                builder: (context) => ResetPasswordPage(accessToken: accessToken),
+                builder: (context) => ResetPasswordPage(
+                  accessToken: accessToken,
+                  refreshToken: refreshToken,
+                ),
                 settings: settings,
               );
             }
