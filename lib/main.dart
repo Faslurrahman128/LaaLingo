@@ -50,9 +50,25 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
           ),
           debugShowCheckedModeBanner: false,
-          home: Splash(
-            dync: lightScheme,
-          ),
+          initialRoute: '/',
+          onGenerateRoute: (settings) {
+            // Handle /reset-password?access_token=...
+            if (settings.name != null && settings.name!.startsWith('/reset-password')) {
+              final uri = Uri.parse(settings.name!);
+              final accessToken = uri.queryParameters['access_token'] ?? '';
+              return MaterialPageRoute(
+                builder: (context) => ResetPasswordPage(accessToken: accessToken),
+                settings: settings,
+              );
+            }
+            // Default route
+            return MaterialPageRoute(
+              builder: (context) => Splash(
+                dync: lightScheme,
+              ),
+              settings: settings,
+            );
+          },
         );
       },
     );
