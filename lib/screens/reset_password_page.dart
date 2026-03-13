@@ -31,10 +31,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     });
     try {
       final supabase = Supabase.instance.client;
-      await supabase.auth.updateUser(
-        UserAttributes(password: _passwordController.text),
-        accessToken: widget.accessToken,
-      );
+        // This will update the password for the currently authenticated user (after magic link/session from reset email)
+        await supabase.auth.updateUser(
+          UserAttributes(password: _passwordController.text),
+        );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Password updated! Please log in.')),
