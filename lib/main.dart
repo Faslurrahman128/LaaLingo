@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_page.dart';
 import 'Splash/inital.dart';
 import 'supabase_config.dart';
+import 'screens/reset_password_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
