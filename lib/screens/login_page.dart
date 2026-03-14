@@ -81,29 +81,15 @@ class _LoginPageState extends State<LoginPage> {
       final email = result?.trim() ?? '';
       if (email.isEmpty) return;
       try {
-        // Try to sign in with a dummy password to check if the user exists
-        await Supabase.instance.client.auth.signInWithPassword(
-          email: email,
-          password: 'dummyPasswordThatWillNeverBeCorrect',
+        await Supabase.instance.client.auth.resetPasswordForEmail(
+          email,
+          redirectTo: '${Uri.base.origin}/reset-password',
         );
-        // If sign-in succeeds (should not happen), do nothing
+        displayMessage('If this email exists, a password reset link was sent.');
       } on AuthException catch (e) {
-        final msg = e.message.toLowerCase();
-        if (msg.contains('invalid login credentials') || msg.contains('invalid email or password')) {
-          // User exists, send reset email
-          await Supabase.instance.client.auth.resetPasswordForEmail(
-            email,
-            redirectTo: '${Uri.base.origin}/reset-password',
-          );
-          displayMessage('Password reset email sent to $email');
-        } else if (msg.contains('user not found')) {
-          // User does not exist
-          displayMessage('No account found for this email address. Please check and try again, or register for a new account.');
-        } else {
-          displayMessage('Could not send reset email.\n'+e.toString());
-        }
+        displayMessage('Could not send reset email.\n${e.message}');
       } catch (e, stack) {
-        displayMessage('Could not send reset email.\n'+e.toString()+'\n$stack');
+        displayMessage('Could not send reset email.\n$e\n$stack');
       }
     }
   final _formKey = GlobalKey<FormState>();
