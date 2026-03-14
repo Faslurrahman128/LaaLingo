@@ -29,6 +29,34 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+  Map<String, String> _parseFragmentParams(Uri uri) {
+    if (uri.fragment.isEmpty) return const {};
+    try {
+      return Uri.splitQueryString(uri.fragment);
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  Map<String, dynamic> _extractRecovery(Uri uri) {
+    final fragmentParams = _parseFragmentParams(uri);
+    final accessToken =
+        uri.queryParameters['access_token'] ?? fragmentParams['access_token'] ?? '';
+    final refreshToken =
+        uri.queryParameters['refresh_token'] ?? fragmentParams['refresh_token'] ?? '';
+    final type = uri.queryParameters['type'] ?? fragmentParams['type'] ?? '';
+    final isRecoveryRoute = uri.path == '/reset-password';
+    final isRecoveryType = type.toLowerCase() == 'recovery';
+
+    return {
+      'accessToken': accessToken,
+      'refreshToken': refreshToken,
+      'isRecovery': (isRecoveryRoute || isRecoveryType) &&
+          accessToken.isNotEmpty &&
+          refreshToken.isNotEmpty,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return DynamicColorBuilder(
@@ -37,6 +65,7 @@ class MyApp extends StatelessWidget {
             lightDynamic ?? ThemeData.light(useMaterial3: true).colorScheme;
         final darkScheme =
             darkDynamic ?? ThemeData.dark(useMaterial3: true).colorScheme;
+        final recovery = _extractRecovery(Uri.base);
         return MaterialApp(
           title: 'LaaLingo',
           theme: ThemeData(
@@ -51,29 +80,14 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
           ),
           debugShowCheckedModeBanner: false,
-          initialRoute: '/',
-          onGenerateRoute: (settings) {
-            // Handle /reset-password?access_token=...&refresh_token=...
-            if (settings.name != null && settings.name!.startsWith('/reset-password')) {
-              final uri = Uri.parse(settings.name!);
-              final accessToken = uri.queryParameters['access_token'] ?? '';
-              final refreshToken = uri.queryParameters['refresh_token'] ?? '';
-              return MaterialPageRoute(
-                builder: (context) => ResetPasswordPage(
-                  accessToken: accessToken,
-                  refreshToken: refreshToken,
+          home: (recovery['isRecovery'] as bool)
+              ? ResetPasswordPage(
+                  accessToken: recovery['accessToken'] as String,
+                  refreshToken: recovery['refreshToken'] as String,
+                )
+              : Splash(
+                  dync: lightScheme,
                 ),
-                settings: settings,
-              );
-            }
-            // Default route
-            return MaterialPageRoute(
-              builder: (context) => Splash(
-                dync: lightScheme,
-              ),
-              settings: settings,
-            );
-          },
         );
       },
     );

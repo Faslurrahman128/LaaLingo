@@ -91,7 +91,10 @@ class _LoginPageState extends State<LoginPage> {
         final msg = e.message.toLowerCase();
         if (msg.contains('invalid login credentials') || msg.contains('invalid email or password')) {
           // User exists, send reset email
-          await Supabase.instance.client.auth.resetPasswordForEmail(email);
+          await Supabase.instance.client.auth.resetPasswordForEmail(
+            email,
+            redirectTo: '${Uri.base.origin}/reset-password',
+          );
           displayMessage('Password reset email sent to $email');
         } else if (msg.contains('user not found')) {
           // User does not exist

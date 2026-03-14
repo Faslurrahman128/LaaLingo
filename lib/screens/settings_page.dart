@@ -30,7 +30,10 @@ class SettingsPage extends StatelessWidget {
     }
 
     try {
-      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+      await Supabase.instance.client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: '${Uri.base.origin}/reset-password',
+      );
       _showMessage(context, 'Password reset email sent to $email');
     } catch (e) {
       _showMessage(context, 'Could not send reset email.');

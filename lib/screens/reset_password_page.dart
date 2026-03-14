@@ -37,7 +37,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       try {
         final supabase = Supabase.instance.client;
         final response = await supabase.auth.setSession(
-          widget.accessToken,
           widget.refreshToken,
         );
         if (response.session != null && response.user != null) {
