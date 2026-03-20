@@ -93,7 +93,6 @@ class _ResourceDownloadingState extends State<ResourceDownloading> {
       // Ignore and continue; learning pages may prompt the user later.
     }
 
-    await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     // Make the dashboard the root so back can't navigate to Login.
     Navigator.of(context).pushAndRemoveUntil(

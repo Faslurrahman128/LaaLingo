@@ -27,6 +27,7 @@ class _chatUIState extends State<chatUI> {
   final TextEditingController messagefield = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, dynamic>> _pendingMessages = <Map<String, dynamic>>[];
+  final Map<String, DateTime> _recentSendFingerprints = <String, DateTime>{};
   bool _sending = false;
 
   @override
@@ -50,9 +51,77 @@ class _chatUIState extends State<chatUI> {
     });
   }
 
+  DateTime? _tryParseTs(dynamic value) {
+    final raw = value?.toString() ?? '';
+    if (raw.isEmpty) return null;
+    try {
+      return DateTime.parse(raw).toUtc();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _sameMessage(Map<String, dynamic> serverRow, Map<String, dynamic> pendingRow) {
+    final serverSender = (serverRow['sender'] ?? '').toString().toLowerCase();
+    final pendingSender = (pendingRow['sender'] ?? '').toString().toLowerCase();
+    if (serverSender != pendingSender) return false;
+
+    final serverMessage = (serverRow['message'] ?? '').toString();
+    final pendingMessage = (pendingRow['message'] ?? '').toString();
+    if (serverMessage != pendingMessage) return false;
+
+    final serverTs = _tryParseTs(serverRow['timestamp']);
+    final pendingTs = _tryParseTs(pendingRow['timestamp']);
+    if (serverTs == null || pendingTs == null) return true;
+
+    final delta = serverTs.difference(pendingTs).inSeconds.abs();
+    return delta <= 5;
+  }
+
+  String _fingerprint(Map<String, dynamic> row) {
+    final rowSender = (row['sender'] ?? '').toString().trim().toLowerCase();
+    final rowReciver = (row['reciver'] ?? '').toString().trim().toLowerCase();
+    final rowMessage = (row['message'] ?? '').toString().trim();
+    final rowId = row['id']?.toString().trim() ?? '';
+
+    final ts = _tryParseTs(row['timestamp']);
+    final tsSecond = ts == null
+        ? ((row['timestamp'] ?? '').toString())
+        : ts.millisecondsSinceEpoch ~/ 1000;
+
+    if (rowId.isNotEmpty) {
+      return 'id:$rowId';
+    }
+
+    return '$rowSender|$rowReciver|$rowMessage|$tsSecond';
+  }
+
+  List<Map<String, dynamic>> _dedupeMessages(List<Map<String, dynamic>> rows) {
+    final unique = <String, Map<String, dynamic>>{};
+
+    for (final row in rows) {
+      final key = _fingerprint(row);
+      unique[key] = row;
+    }
+
+    return unique.values.toList(growable: false);
+  }
+
   Future<void> _handleSend() async {
     final text = messagefield.text.trim();
     if (text.isEmpty || _sending) return;
+
+    final now = DateTime.now();
+    _recentSendFingerprints.removeWhere(
+      (_, sentAt) => now.difference(sentAt).inSeconds > 10,
+    );
+
+    final sendKey = '${sender.toLowerCase()}|${widget.reciver.toLowerCase()}|$text';
+    final lastSentAt = _recentSendFingerprints[sendKey];
+    if (lastSentAt != null && now.difference(lastSentAt).inMilliseconds < 1500) {
+      return;
+    }
+    _recentSendFingerprints[sendKey] = now;
 
     final ts = DateTime.now().toIso8601String();
     final optimistic = <String, dynamic>{
@@ -125,14 +194,13 @@ class _chatUIState extends State<chatUI> {
                   }
 
                   // Reconcile optimistic messages once they appear in the stream.
-                  final seenKeys = <String>{
-                    for (final r in rows)
-                      '${(r['sender'] ?? '').toString().toLowerCase()}|${(r['message'] ?? '').toString()}|${(r['timestamp'] ?? '').toString()}'
-                  };
                   final pendingFiltered = _pendingMessages.where((m) {
-                    final key =
-                        '${(m['sender'] ?? '').toString().toLowerCase()}|${(m['message'] ?? '').toString()}|${(m['timestamp'] ?? '').toString()}';
-                    return !seenKeys.contains(key);
+                    for (final row in rows) {
+                      if (_sameMessage(row, m)) {
+                        return false;
+                      }
+                    }
+                    return true;
                   }).toList(growable: false);
 
                   if (pendingFiltered.length != _pendingMessages.length) {
@@ -146,10 +214,10 @@ class _chatUIState extends State<chatUI> {
                     });
                   }
 
-                  final merged = <Map<String, dynamic>>[
+                  final merged = _dedupeMessages(<Map<String, dynamic>>[
                     ...rows,
                     ...pendingFiltered,
-                  ];
+                  ]);
                   merged.sort((a, b) {
                     final at = (a['timestamp'] ?? '').toString();
                     final bt = (b['timestamp'] ?? '').toString();

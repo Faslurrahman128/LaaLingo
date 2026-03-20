@@ -25,13 +25,51 @@ class questionsUi extends StatefulWidget {
 }
 
 class _questionsUiState extends State<questionsUi> {
-  late int Randint;
+  static const List<String> _readingTaskOrder = [
+    "Basic_Words",
+    "Numbers",
+    "Colors_Data",
+    "Food_Data",
+    "Animals_Data",
+    "Vocabulary",
+    "Everyday_Essentials",
+    "Travel_Talk",
+    "Grammar_and_Usage_Drill",
+    "Phrases and Expressions",
+    "Grammar",
+    "Dialogues and Conversations",
+    "Cultural Insights",
+    "Fill in the Blanks",
+  ];
+
+  static const List<String> _quizTaskOrder = [
+    "Basic_Words",
+    "Numbers",
+    "Colors_Data",
+    "Food_Data",
+    "Animals_Data",
+    "Vocabulary",
+    "Grammar",
+    "Cultural Insights",
+    "Phrases and Expressions",
+    "Dialogues and Conversations",
+  ];
+
   Color answer_opition = Colors.white;
   bool Popin_correct = false;
   bool Popin_incorrect = false;
   double Progress = 0;
+  int _answeredCount = 0;
+  int _correctCount = 0;
   late List Question;
-  List UQuestion = [];
+  late List<List<dynamic>> _questionPairs;
+  final List<int> _questionOrder = [];
+  int _currentQuestionOrderPos = 0;
+  String _currentPrompt = '';
+  String _currentAnswer = '';
+  List<String> _currentOptions = [];
+  final Random _random = Random();
+  final List<Map<String, String>> _mistakes = [];
   late String lang;
   late String lang_code;
   progress prog = progress();
@@ -82,23 +120,140 @@ class _questionsUiState extends State<questionsUi> {
       return;
     }
 
-    var i = 0;
-    Question.forEach((element) {
-      UQuestion.add([TempU[i], element]);
-      i++;
-    });
-    print(UQuestion.isNotEmpty);
-    Random RandomNumber = Random();
-    Randint = RandomNumber.nextInt(4);
-    UQuestion.shuffle();
+    final pairCount = min(Question.length, TempU.length);
+    _questionPairs = <List<dynamic>>[];
+    for (var i = 0; i < pairCount; i++) {
+      _questionPairs.add([TempU[i], Question[i]]);
+    }
+
+    if (_questionPairs.length < 4) {
+      _initError = 'Need at least 4 unique questions for "${widget.topic}".';
+      super.initState();
+      return;
+    }
+
+    _questionOrder
+      ..clear()
+      ..addAll(List<int>.generate(_questionPairs.length, (index) => index))
+      ..shuffle(_random);
+    _prepareCurrentQuestion();
     super.initState();
   }
 
-  int nextQuestion() {
-    Random RandomNumber = Random();
-    Randint = RandomNumber.nextInt(4);
-    UQuestion.shuffle();
-    return Randint;
+  void _prepareCurrentQuestion() {
+    if (_questionOrder.isEmpty) return;
+
+    if (_currentQuestionOrderPos >= _questionOrder.length) {
+      _questionOrder.shuffle(_random);
+      _currentQuestionOrderPos = 0;
+    }
+
+    final currentPairIndex = _questionOrder[_currentQuestionOrderPos];
+    final currentPair = _questionPairs[currentPairIndex];
+    _currentPrompt = currentPair[0].toString();
+    _currentAnswer = currentPair[1].toString();
+
+    final distractorIndices = List<int>.generate(_questionPairs.length, (i) => i)
+      ..remove(currentPairIndex)
+      ..shuffle(_random);
+
+    final options = <String>[_currentAnswer];
+
+    for (final idx in distractorIndices) {
+      final candidate = _questionPairs[idx][1].toString();
+      if (!options.contains(candidate)) {
+        options.add(candidate);
+      }
+      if (options.length == 4) break;
+    }
+
+    for (final idx in distractorIndices) {
+      if (options.length == 4) break;
+      options.add(_questionPairs[idx][1].toString());
+    }
+
+    _currentOptions = options.take(4).toList()..shuffle(_random);
+  }
+
+  void _goToNextQuestion() {
+    _currentQuestionOrderPos += 1;
+    _prepareCurrentQuestion();
+  }
+
+  void _unlockNextTaskAfterCompletion() {
+    final currentTopic = widget.topic;
+
+    final readingIndex = _readingTaskOrder.indexOf(currentTopic);
+    if (readingIndex >= 0) {
+      final currentUnlocked = box.get('unlocked_reading_task_index');
+      final unlocked = (currentUnlocked is num)
+          ? currentUnlocked.toInt()
+          : int.tryParse(currentUnlocked?.toString() ?? '') ?? 0;
+      if (readingIndex >= unlocked) {
+        final next = (readingIndex + 1).clamp(0, _readingTaskOrder.length - 1);
+        box.put('unlocked_reading_task_index', next);
+      }
+    }
+
+    final quizIndex = _quizTaskOrder.indexOf(currentTopic);
+    if (quizIndex >= 0) {
+      final currentUnlocked = box.get('unlocked_quiz_task_index');
+      final unlocked = (currentUnlocked is num)
+          ? currentUnlocked.toInt()
+          : int.tryParse(currentUnlocked?.toString() ?? '') ?? 0;
+      if (quizIndex >= unlocked) {
+        final next = (quizIndex + 1).clamp(0, _quizTaskOrder.length - 1);
+        box.put('unlocked_quiz_task_index', next);
+      }
+    }
+  }
+
+  Future<void> _showQuizSummary() async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Quiz summary'),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Answered: $_answeredCount'),
+                Text('Correct: $_correctCount'),
+                Text('Accuracy: ${_answeredCount == 0 ? 0 : ((_correctCount / _answeredCount) * 100).round()}%'),
+                if (_mistakes.isNotEmpty) ...[
+                  SizedBox(height: 12),
+                  Text(
+                    'Review mistakes',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  ..._mistakes.take(5).map(
+                        (m) => Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text(
+                            '${m['prompt']} → ${m['answer']}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Continue'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget build(BuildContext context) {
@@ -144,7 +299,19 @@ class _questionsUiState extends State<questionsUi> {
                       percent: Progress,
                       width: MediaQuery.of(context).size.width / 1.5,
                     ),
-                    Icon(Icons.report)
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$_correctCount/5',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'A:$_answeredCount',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    )
                   ],
                 ),
               ),
@@ -154,7 +321,7 @@ class _questionsUiState extends State<questionsUi> {
                   children: [
                     Center(
                         child: Text(
-                      "${(UQuestion[Randint][0])} in ${lang}",
+                      "$_currentPrompt in $lang",
                       style: TextStyle(fontSize: 20),
                     )),
                     SizedBox(
@@ -164,7 +331,7 @@ class _questionsUiState extends State<questionsUi> {
                       onTap: () async {
                         flutterTts.setLanguage(trcode[lang_code].toString());
 
-                        flutterTts.speak(UQuestion[Randint][1]);
+                        flutterTts.speak(_currentAnswer);
                       },
                       child: Container(
                         padding: EdgeInsets.all(10),
@@ -187,10 +354,7 @@ class _questionsUiState extends State<questionsUi> {
                   padding: const EdgeInsets.all(8.0),
                   child: Column(
                     children: [
-                      AnswerOptions(UQuestion[0][1], UQuestion[Randint][1]),
-                      AnswerOptions(UQuestion[1][1], UQuestion[Randint][1]),
-                      AnswerOptions(UQuestion[2][1], UQuestion[Randint][1]),
-                      AnswerOptions(UQuestion[3][1], UQuestion[Randint][1]),
+                      for (final option in _currentOptions) AnswerOptions(option),
                     ],
                   ),
                 ),
@@ -236,7 +400,7 @@ class _questionsUiState extends State<questionsUi> {
                       fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  UQuestion[Randint][1],
+                  _currentAnswer,
                   style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -245,7 +409,7 @@ class _questionsUiState extends State<questionsUi> {
                 GestureDetector(
                   onTap: () {
                     setState(() {
-                      Randint = nextQuestion();
+                      _goToNextQuestion();
                       Popin_incorrect = false;
                     });
                   },
@@ -297,21 +461,31 @@ class _questionsUiState extends State<questionsUi> {
                       fontWeight: FontWeight.bold),
                 ),
                 GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      Randint = nextQuestion();
-                      Popin_correct = false;
-                      if (Progress <= 0.8) {
+                  onTap: () async {
+                    final shouldFinish = Progress > 0.8;
+                    if (!shouldFinish) {
+                      setState(() {
+                        _goToNextQuestion();
+                        Popin_correct = false;
                         Progress += 0.2;
-                      } else {
-                        prog.progress_update(0);
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => IndProgress(
-                                  data: widget.topic,
-                                  dync: widget.dync,
-                                )));
-                      }
+                      });
+                      return;
+                    }
+
+                    setState(() {
+                      Popin_correct = false;
                     });
+
+                    await _showQuizSummary();
+                    if (!mounted) return;
+
+                    _unlockNextTaskAfterCompletion();
+                    prog.progress_update(0);
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => IndProgress(
+                              data: widget.topic,
+                              dync: widget.dync,
+                            )));
                   },
                   child: Container(
                     margin: EdgeInsets.all(0),
@@ -338,16 +512,27 @@ class _questionsUiState extends State<questionsUi> {
     );
   }
 
-  Expanded AnswerOptions(String value, String answer) {
+  Expanded AnswerOptions(String value) {
     return Expanded(
         child: GestureDetector(
       onTap: () {
-        if (value == answer) {
+        if (Popin_correct || Popin_incorrect) return;
+
+        final prompt = _currentPrompt;
+        _answeredCount += 1;
+
+        if (value == _currentAnswer) {
           setState(() {
+            _correctCount += 1;
             Popin_correct = true;
           });
         } else {
           setState(() {
+            _mistakes.add({
+              'prompt': prompt,
+              'picked': value,
+              'answer': _currentAnswer,
+            });
             Popin_incorrect = true;
           });
         }

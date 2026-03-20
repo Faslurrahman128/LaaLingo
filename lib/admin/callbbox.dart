@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class callbox extends StatefulWidget {
   late ColorScheme dync;
@@ -11,9 +10,34 @@ class callbox extends StatefulWidget {
 }
 
 class _callboxState extends State<callbox> {
+  late final List<StudentRequest> _requests;
+  late final String _instructorName;
+
+  @override
+  void initState() {
+    super.initState();
+    _requests = List<StudentRequest>.from(initialRequests);
+    final user = Supabase.instance.client.auth.currentUser;
+    final metadataName = user?.userMetadata?['name'];
+    final emailPrefix = (user?.email ?? '').split('@').first;
+    _instructorName = (metadataName is String && metadataName.trim().isNotEmpty)
+        ? metadataName.trim()
+        : (emailPrefix.isNotEmpty ? emailPrefix : 'Instructor');
+  }
+
+  void _handleAction(String action, StudentRequest request) {
+    setState(() {
+      _requests.remove(request);
+    });
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text('$action: ${request.name}')));
+  }
+
   @override
   Widget build(BuildContext context) {
-    double kh = MediaQuery.of(context).size.height;
+    final kh = MediaQuery.of(context).size.height;
 
     return Column(
       children: [
@@ -27,76 +51,148 @@ class _callboxState extends State<callbox> {
               child: Row(
                 children: [
                   Text(
-                    "Hello \nAbilash",
+                    'Hello\n$_instructorName',
                     style: TextStyle(
-                        color: widget.dync.background,
-                        fontSize: 50,
-                        fontWeight: FontWeight.bold),
+                      color: widget.dync.onPrimary,
+                      fontSize: 44,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  Text("")
                 ],
               ),
             ),
           ),
         ),
         Container(
-          padding: EdgeInsets.only(left: 20),
+          padding: const EdgeInsets.only(left: 20),
           alignment: Alignment.centerLeft,
           child: Text(
-            "Requested Students",
-            style: TextStyle(fontWeight: FontWeight.bold),
+            'Requested Students',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: widget.dync.onPrimary,
+            ),
           ),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Divider(
-            color: widget.dync.inversePrimary,
+            color: widget.dync.onPrimary.withOpacity(0.4),
           ),
         ),
         SizedBox(
           height: kh / 3,
-          child: ListView.builder(
-              itemCount: data.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  color: widget.dync.primaryContainer,
-                  width: double.infinity,
-                  child: Row(
-                    children: [
-                      Container(
-                        height: 40,
-                        width: 40,
+          child: _requests.isEmpty
+              ? Center(
+                  child: Text(
+                    'No pending requests',
+                    style: TextStyle(
+                      color: widget.dync.onPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: _requests.length,
+                  itemBuilder: (context, index) {
+                    final request = _requests[index];
+                    return Container(
+                      margin:
+                          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: widget.dync.primaryContainer,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      Column(
-                        children: [Text("Name"), Text("Email")],
-                      ),
-                      Column(
+                      width: double.infinity,
+                      child: Row(
                         children: [
-                          Container(
-                            child: Text("Accept"),
+                          CircleAvatar(
+                            backgroundColor: widget.dync.primary,
+                            child: Text(
+                              request.name.isNotEmpty
+                                  ? request.name[0].toUpperCase()
+                                  : '?',
+                              style: TextStyle(color: widget.dync.onPrimary),
+                            ),
                           ),
-                          Container(
-                            child: Text("Decline"),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                request.name,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: widget.dync.onPrimaryContainer,
+                                ),
+                              ),
+                              Text(
+                                request.email,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: widget.dync.onPrimaryContainer
+                                      .withOpacity(0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          Column(
+                            children: [
+                              SizedBox(
+                                height: 30,
+                                child: ElevatedButton(
+                                  onPressed: () =>
+                                      _handleAction('Accepted', request),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10),
+                                  ),
+                                  child: const Text('Accept'),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              SizedBox(
+                                height: 30,
+                                child: OutlinedButton(
+                                  onPressed: () =>
+                                      _handleAction('Declined', request),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10),
+                                  ),
+                                  child: const Text('Decline'),
+                                ),
+                              )
+                            ],
                           )
                         ],
-                      )
-                    ],
-                  ),
-                );
-              }),
+                      ),
+                    );
+                  },
+                ),
         )
       ],
     );
   }
 }
 
-List<String> data = [
-  "Tamizh",
-  "Tamizh",
-  "Tamizh",
-  "Tamizh",
-  "Tamizh",
-  "Tamizh",
-  "Tamizh",
-  "Tamizh"
+class StudentRequest {
+  final String name;
+  final String email;
+
+  const StudentRequest({required this.name, required this.email});
+}
+
+const List<StudentRequest> initialRequests = [
+  StudentRequest(name: 'Tamizh Kumar', email: 'tamizh@example.com'),
+  StudentRequest(name: 'Saroja Devi', email: 'saroja@example.com'),
+  StudentRequest(name: 'Ahamed Ali', email: 'ahamed@example.com'),
+  StudentRequest(name: 'Nivetha', email: 'nivetha@example.com'),
+  StudentRequest(name: 'Kishore', email: 'kishore@example.com'),
+  StudentRequest(name: 'Rihana', email: 'rihana@example.com'),
+  StudentRequest(name: 'Pradeep', email: 'pradeep@example.com'),
+  StudentRequest(name: 'Jenifa', email: 'jenifa@example.com'),
 ];

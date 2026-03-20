@@ -28,17 +28,13 @@ class _TranslatorScreenState extends State<TranslatorScreen> {
   bool islist = false;
   var langItems = [
     'Hindi',
-    'German',
     'French',
-    'Japanese',
     'Tamil',
     'Korean',
     "English"
   ];
 
   Map LangAvail = {
-    "German": "de",
-    "Japanese": "ja",
     "Russian": "ru",
     "French": "fr",
     "Tamil": "ta",

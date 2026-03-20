@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:LaaLingo/learning/progress.dart';
 import 'package:LaaLingo/learning/learning.dart';
 import 'package:LaaLingo/progress_brain.dart/progress.dart';
+import 'package:LaaLingo/screens/RLSW/fill_in_blanks.dart';
 
 class Reading extends StatefulWidget {
   late ColorScheme dync;
@@ -15,6 +17,7 @@ class Reading extends StatefulWidget {
 
 class _ReadingState extends State<Reading> {
   progress prog = progress();
+  final box = Hive.box('LocalDB');
 
   @override
   Widget build(BuildContext context) {
@@ -47,19 +50,36 @@ class _ReadingState extends State<Reading> {
             child: ListView.builder(
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
+                  final rawUnlocked = box.get('unlocked_reading_task_index');
+                  final unlockedIndex = (rawUnlocked is num)
+                      ? rawUnlocked.toInt()
+                      : int.tryParse(rawUnlocked?.toString() ?? '') ?? 0;
+                  final isUnlocked = index <= unlockedIndex;
+
                   return GestureDetector(
                     onTap: () {
-                      index <= prog.progress_get()[0] / 6
+                      isUnlocked
                           ? {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => questionsUi(
-                                        topic: categories[index],
-                                        dync: widget.dync,
-                                      )))
+                              categories[index] == 'Fill in the Blanks'
+                                  ? Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => FillInBlanksPage(
+                                          dync: widget.dync,
+                                        ),
+                                      ),
+                                    )
+                                  : Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => questionsUi(
+                                          topic: categories[index],
+                                          dync: widget.dync,
+                                        ),
+                                      ),
+                                    )
                             }
                           : {};
                     },
-                    child: !(index <= prog.progress_get()[0] / 6)
+                    child: !isUnlocked
                         ? Stack(
                             children: [
                               Container(
@@ -149,9 +169,18 @@ class TopheadCLipper extends CustomClipper<Path> {
 }
 
 List<String> categories = [
+  "Basic_Words",
+  "Numbers",
+  "Colors_Data",
+  "Food_Data",
+  "Animals_Data",
   "Vocabulary",
+  "Everyday_Essentials",
+  "Travel_Talk",
+  "Grammar_and_Usage_Drill",
   "Phrases and Expressions",
   "Grammar",
   "Dialogues and Conversations",
   "Cultural Insights",
+  "Fill in the Blanks",
 ];

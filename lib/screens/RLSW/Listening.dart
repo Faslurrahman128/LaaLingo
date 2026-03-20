@@ -119,7 +119,16 @@ class _listeningState extends State<listening> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = listeningRaw.keys.map((e) => e.toString()).toList();
+    final categories = listeningRaw.keys
+        .map((e) => e.toString())
+        .toSet()
+        .toList(growable: false);
+
+    String titleFor(String key) {
+      if (key == 'Quick_Listen_Practice') return 'Quick Listen Practice';
+      if (key == 'Listening_Challenge') return 'Listening Challenge';
+      return key.replaceAll('_', ' ');
+    }
 
     return Material(
       child: Scaffold(
@@ -151,15 +160,24 @@ class _listeningState extends State<listening> {
                       itemBuilder: (context, index) {
                         final cat = categories[index];
                         final translated = box.get(cat);
-                        final items = (translated is List)
+                        final rawItems = (translated is List)
                             ? translated
                             : (listeningRaw[cat] is List)
                                 ? (listeningRaw[cat] as List)
                                 : const <dynamic>[];
 
+                        final seen = <String>{};
+                        final items = <dynamic>[];
+                        for (final item in rawItems) {
+                          final key = item.toString().trim().toLowerCase();
+                          if (key.isEmpty || seen.contains(key)) continue;
+                          seen.add(key);
+                          items.add(item);
+                        }
+
                         return ExpansionTile(
                           title: Text(
-                            cat,
+                            titleFor(cat),
                             style: TextStyle(
                               color: widget.dync.onPrimary,
                               fontWeight: FontWeight.bold,

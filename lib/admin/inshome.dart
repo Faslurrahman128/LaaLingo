@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:LaaLingo/admin/callbbox.dart';
+import 'package:LaaLingo/admin/insmail.dart';
+import 'package:LaaLingo/admin/inssettings.dart';
+import 'package:LaaLingo/screens/login_page.dart';
 
 class InsHome extends StatefulWidget {
   late ColorScheme dync;
@@ -13,10 +14,40 @@ class InsHome extends StatefulWidget {
 }
 
 class _InsHomeState extends State<InsHome> {
+  int _selectedIndex = 0;
+
+  Widget _buildBody() {
+    switch (_selectedIndex) {
+      case 1:
+        return InsMailPage(dync: widget.dync);
+      case 2:
+        return InsSettingsPage(dync: widget.dync);
+      case 0:
+      default:
+        return callbox(dync: widget.dync);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: widget.dync.primary,
+      appBar: AppBar(
+        backgroundColor: widget.dync.primary,
+        foregroundColor: widget.dync.onPrimary,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (_) => LoginPage(dync: widget.dync),
+              ),
+              (route) => false,
+            );
+          },
+        ),
+        title: const Text('Instructor Panel'),
+      ),
       bottomNavigationBar: Container(
         margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
         padding: EdgeInsets.all(6),
@@ -24,6 +55,7 @@ class _InsHomeState extends State<InsHome> {
             color: widget.dync.inversePrimary,
             borderRadius: BorderRadius.all(Radius.circular(20))),
         child: GNav(
+          selectedIndex: _selectedIndex,
           duration: Duration(milliseconds: 1000),
           tabBorderRadius: 20,
           tabMargin: EdgeInsets.all(3),
@@ -41,13 +73,13 @@ class _InsHomeState extends State<InsHome> {
             ),
           ],
           onTabChange: (value) {
-            setState(() {});
+            setState(() {
+              _selectedIndex = value;
+            });
           },
         ),
       ),
-      body: callbox(
-        dync: widget.dync,
-      ),
+      body: _buildBody(),
     );
   }
 }

@@ -111,7 +111,7 @@ class _leaderboardState extends State<leaderboard> {
               // scrolling list to avoid duplicates. Keep each row's original index so
               // rank numbers stay correct.
               final visibleRows = <MapEntry<int, dynamic>>[];
-              for (var i = 0; i < udata.length; i++) {
+              for (var i = 0; i < udata.length; i++) {                                                                                                                                                                    
                 if (showPinnedMe && myIndex != null && i == myIndex) continue;
                 visibleRows.add(MapEntry(i, udata[i]));
               }

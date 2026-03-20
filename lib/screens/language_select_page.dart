@@ -18,9 +18,7 @@ class LanguageSelectPage extends StatefulWidget {
 
 class _LanguageSelectPageState extends State<LanguageSelectPage> {
   final List<List<dynamic>> _langAvail = [
-    ["English", "en", "US"],
-    ["German", "de", "DE"],
-    ["Japanese", "ja", "JP"],
+    ["English", "en", "GB"],
     ["Russian", "ru", "RU"],
     ["Korean", "ko", "KR"],
     ["French", "fr", "PM"],

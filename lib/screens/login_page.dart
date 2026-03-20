@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:LaaLingo/ResourcePage/Resource.dart';
 import 'package:LaaLingo/admin/inshome.dart';
+import 'package:LaaLingo/admin/inslogin.dart';
 import 'package:LaaLingo/screens/register_page.dart';
 import 'package:LaaLingo/utils/validator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -264,7 +265,7 @@ class _LoginPageState extends State<LoginPage> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => InsHome(
+                        builder: (context) => Inslogin(
                           dync: widget.dync,
                         ),
                       ),

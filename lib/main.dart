@@ -4,12 +4,11 @@ import 'package:lottie/lottie.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:after_layout/after_layout.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:math' as math;
 
 import 'screens/login_page.dart';
-import 'Splash/inital.dart';
+import 'screens/get_started_page.dart';
 import 'supabase_config.dart';
 import 'screens/reset_password_page.dart';
 
@@ -102,33 +101,74 @@ class Splash extends StatefulWidget {
   SplashState createState() => new SplashState();
 }
 
-class SplashState extends State<Splash> with AfterLayoutMixin<Splash> {
-  Future checkFirstSeen() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool _seen = (prefs.getBool('seen') ?? false);
-
-    if (_seen) {
-      Navigator.of(context).pushReplacement(new MaterialPageRoute(
-          builder: (context) => LoginPage(
-                dync: widget.dync,
-              )));
-    } else {
-      await prefs.setBool('seen', true);
-      Navigator.of(context).pushReplacement(new MaterialPageRoute(
-          builder: (context) => InitPage(
-                dync: widget.dync,
-              )));
-    }
+class SplashState extends State<Splash> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => GetStartedPage(
+            dync: widget.dync,
+          ),
+        ),
+      );
+    });
   }
 
   @override
-  void afterFirstLayout(BuildContext context) => checkFirstSeen();
-
-  @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      backgroundColor: widget.dync.tertiaryContainer,
-      body: new Center(child: new Text("🐼 🐼 🐼")),
+    return Scaffold(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final shortestSide = math.min(
+            constraints.maxWidth,
+            constraints.maxHeight,
+          );
+          final iconSize = (shortestSide * 0.52).clamp(160.0, 420.0);
+
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  widget.dync.primary,
+                  widget.dync.primaryContainer,
+                ],
+              ),
+            ),
+            child: Center(
+              child: Container(
+                width: iconSize,
+                height: iconSize,
+                padding: EdgeInsets.all(iconSize * 0.12),
+                decoration: BoxDecoration(
+                  color: widget.dync.onPrimary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(iconSize * 0.24),
+                  border: Border.all(
+                    color: widget.dync.onPrimary.withOpacity(0.25),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.18),
+                      blurRadius: 22,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Image.asset(
+                  'assets/AppIcon.png',
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

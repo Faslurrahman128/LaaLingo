@@ -58,11 +58,6 @@ class InitPage extends StatelessWidget {
                     child: AnimatedTextKit(repeatForever: true, animatedTexts: [
                       RotateAnimatedText(
                           "Try the Worlds leading online language tutorial center",
-                          textStyle: TextStyle(fontSize: 15)),
-                      RotateAnimatedText("世界をリードするオンライン言語チュートリアル センターを試してください",
-                          textStyle: TextStyle(fontSize: 15)),
-                      RotateAnimatedText(
-                          "உலகின் முன்னணி ஆன்லைன் மொழி பயிற்சி மையத்தை முயற்சிக்கவும்",
                           textStyle: TextStyle(fontSize: 20))
                     ]),
                   ),

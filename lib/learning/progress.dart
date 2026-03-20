@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:LaaLingo/learning/learning.dart';
 import 'package:LaaLingo/progress_brain.dart/progress.dart';
 
@@ -22,7 +23,7 @@ List<String> Vocabulary_Key = [
   "Colors_Data",
   "Food_Data",
   "Animals_Data",
-  "Animals_Data",
+  "Vocabulary",
   "Grammar",
   "Cultural Insights",
   "Phrases and Expressions",
@@ -39,6 +40,7 @@ class IndProgress extends StatefulWidget {
 
 class _IndProgressState extends State<IndProgress> {
   progress prog = progress();
+  final box = Hive.box('LocalDB');
 
   @override
   Widget build(BuildContext context) {
@@ -72,9 +74,15 @@ class _IndProgressState extends State<IndProgress> {
                   crossAxisSpacing: 2,
                   itemCount: Vocabulary.length,
                   itemBuilder: (context, Index) {
+                    final rawUnlocked = box.get('unlocked_quiz_task_index');
+                    final unlockedIndex = (rawUnlocked is num)
+                        ? rawUnlocked.toInt()
+                        : int.tryParse(rawUnlocked?.toString() ?? '') ?? 0;
+                    final isUnlocked = Index <= unlockedIndex;
+
                     return GestureDetector(
                       onTap: () {
-                        !(Index <= prog.progress_get()[0])
+                        !isUnlocked
                             ? {print("nothing")}
                             : {
                                 Navigator.of(context)
@@ -85,7 +93,7 @@ class _IndProgressState extends State<IndProgress> {
                                             )))
                               };
                       },
-                      child: !(Index <= prog.progress_get()[0])
+                      child: !isUnlocked
                           ? Stack(
                               children: [
                                 Container(

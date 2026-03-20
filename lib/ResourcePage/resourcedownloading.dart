@@ -12,6 +12,86 @@ class ResourceBrain {
 
   late List<dynamic> Question;
 
+  List<dynamic> _sliceUnique(List<dynamic> source, int maxItems) {
+    final seen = <String>{};
+    final out = <dynamic>[];
+    for (final item in source) {
+      final key = item.toString().trim().toLowerCase();
+      if (key.isEmpty || seen.contains(key)) continue;
+      seen.add(key);
+      out.add(item);
+      if (out.length >= maxItems) break;
+    }
+    return out;
+  }
+
+  Map<dynamic, dynamic> _augmentReadingData(Map<dynamic, dynamic> raw) {
+    final out = <dynamic, dynamic>{...raw};
+
+    List<dynamic> listOf(String key) {
+      final val = out[key];
+      if (val is List) return List<dynamic>.from(val);
+      return const <dynamic>[];
+    }
+
+    final essentials = <dynamic>[
+      ...listOf('Basic_Words'),
+      ...listOf('Vocabulary'),
+    ];
+    if (essentials.isNotEmpty) {
+      out['Everyday_Essentials'] = _sliceUnique(essentials, 10);
+    }
+
+    final travelTalk = <dynamic>[
+      ...listOf('Phrases and Expressions'),
+      ...listOf('Dialogues and Conversations'),
+    ];
+    if (travelTalk.isNotEmpty) {
+      out['Travel_Talk'] = _sliceUnique(travelTalk, 10);
+    }
+
+    final grammarDrill = <dynamic>[
+      ...listOf('Grammar'),
+      ...listOf('Cultural Insights'),
+    ];
+    if (grammarDrill.isNotEmpty) {
+      out['Grammar_and_Usage_Drill'] = _sliceUnique(grammarDrill, 10);
+    }
+
+    return out;
+  }
+
+  Map<dynamic, dynamic> _augmentListeningData(Map<dynamic, dynamic> raw) {
+    final out = <dynamic, dynamic>{...raw};
+
+    final flattened = <dynamic>[];
+    for (final entry in out.entries) {
+      if (entry.value is List) {
+        flattened.addAll(List<dynamic>.from(entry.value as List));
+      }
+    }
+
+    if (flattened.isNotEmpty) {
+      final uniqueAll = _sliceUnique(flattened, 24);
+      final quick = _sliceUnique(uniqueAll, 10);
+      final quickKeys = quick.map((e) => e.toString().trim().toLowerCase()).toSet();
+
+      final remaining = uniqueAll
+          .where((item) => !quickKeys.contains(item.toString().trim().toLowerCase()))
+          .toList(growable: false);
+
+      final challenge = _sliceUnique(
+        remaining.isNotEmpty ? remaining : uniqueAll.reversed.toList(),
+        10,
+      );
+
+      out['Quick_Listen_Practice'] = quick;
+      out['Listening_Challenge'] = challenge;
+    }
+
+    return out;
+  }
+
   Future<void> initaldownloadlang() async {
     final email = userEmail ?? client.auth.currentUser?.email;
     if (email == null || email.isEmpty) {
@@ -53,12 +133,13 @@ class ResourceBrain {
     box.put('translated_lang_code', lang[1].toString());
     box.put('translated_lang_slot', 1);
 
+    final seedRows = await Future.wait<dynamic>([
+      client.from('DataBase').select().eq('name', 'English_Data').maybeSingle(),
+      client.from('DataBase').select().eq('name', 'LISTENING').maybeSingle(),
+    ]);
+
     // Fetch English_Data from Supabase
-    final dataRes = await client
-        .from('DataBase')
-        .select()
-        .eq('name', 'English_Data')
-        .maybeSingle();
+    final dataRes = seedRows[0] as Map<String, dynamic>?;
     if (dataRes == null) {
       throw Exception(
         'Could not load seed row from Supabase table `DataBase` (0 rows): name = English_Data.\n'
@@ -66,9 +147,11 @@ class ResourceBrain {
         'Fix: ensure the row exists, and if RLS is enabled, add a SELECT policy for authenticated users.',
       );
     }
-    box.put("Data_downloaded", dataRes['data']);
-    print(dataRes['data']);
-    final RawData = (dataRes['data'] as Map).cast<dynamic, dynamic>();
+    final RawData = _augmentReadingData(
+      (dataRes['data'] as Map).cast<dynamic, dynamic>(),
+    );
+    box.put("Data_downloaded", RawData);
+    print(RawData);
     for (final entry in RawData.entries) {
       final key = entry.key;
       Question = await translatefunction(RawData, key, translator, lang[1]);
@@ -76,11 +159,7 @@ class ResourceBrain {
     }
 
     // Fetch LISTENING from Supabase
-    final listeningRes = await client
-        .from('DataBase')
-        .select()
-        .eq('name', 'LISTENING')
-        .maybeSingle();
+    final listeningRes = seedRows[1] as Map<String, dynamic>?;
     if (listeningRes == null) {
       throw Exception(
         'Could not load seed row from Supabase table `DataBase` (0 rows): name = LISTENING.\n'
@@ -88,9 +167,11 @@ class ResourceBrain {
         'Fix: ensure the row exists, and if RLS is enabled, add a SELECT policy for authenticated users.',
       );
     }
-    box.put('SPEAKING', listeningRes['data']);
-    print(listeningRes['data']);
-    final SpeakingRawData = (listeningRes['data'] as Map).cast<dynamic, dynamic>();
+    final SpeakingRawData = _augmentListeningData(
+      (listeningRes['data'] as Map).cast<dynamic, dynamic>(),
+    );
+    box.put('SPEAKING', SpeakingRawData);
+    print(SpeakingRawData);
     for (final entry in SpeakingRawData.entries) {
       final key = entry.key;
       Question = await translatefunction(SpeakingRawData, key, translator, lang[1]);
@@ -125,11 +206,12 @@ class ResourceBrain {
     box.put("Lang", userRes);
     box.put("count_lang", deriveCountLang(userRes));
 
-    final dataRes = await client
-        .from('DataBase')
-        .select()
-        .eq('name', 'English_Data')
-        .maybeSingle();
+    final seedRows = await Future.wait<dynamic>([
+      client.from('DataBase').select().eq('name', 'English_Data').maybeSingle(),
+      client.from('DataBase').select().eq('name', 'LISTENING').maybeSingle(),
+    ]);
+
+    final dataRes = seedRows[0] as Map<String, dynamic>?;
     if (dataRes == null) {
       throw Exception(
         'Could not load seed row from Supabase table `DataBase` (0 rows): name = English_Data.\n'
@@ -137,13 +219,12 @@ class ResourceBrain {
         'Fix: ensure the row exists, and if RLS is enabled, add a SELECT policy for authenticated users.',
       );
     }
-    box.put("Data_downloaded", dataRes['data']);
+    final preparedReading = _augmentReadingData(
+      (dataRes['data'] as Map).cast<dynamic, dynamic>(),
+    );
+    box.put("Data_downloaded", preparedReading);
 
-    final listeningRes = await client
-        .from('DataBase')
-        .select()
-        .eq('name', 'LISTENING')
-        .maybeSingle();
+    final listeningRes = seedRows[1] as Map<String, dynamic>?;
     if (listeningRes == null) {
       throw Exception(
         'Could not load seed row from Supabase table `DataBase` (0 rows): name = LISTENING.\n'
@@ -151,7 +232,10 @@ class ResourceBrain {
         'Fix: ensure the row exists, and if RLS is enabled, add a SELECT policy for authenticated users.',
       );
     }
-    box.put('SPEAKING', listeningRes['data']);
+    final preparedListening = _augmentListeningData(
+      (listeningRes['data'] as Map).cast<dynamic, dynamic>(),
+    );
+    box.put('SPEAKING', preparedListening);
 
     final slot = getLangSlot(userRes, n);
     final lang = slot?['Selected_lang'];
@@ -290,15 +374,26 @@ class ResourceBrain {
   }
 
   Future<List> translatefunction(RawData, key, translator, tolang) async {
-    List TempQuestion = RawData[key];
-    for (int i = 0; i < TempQuestion.length; i++) {
-      await translator
-          .translate(TempQuestion[i], to: tolang.toString())
-          .then((value) {
-        TempQuestion[i] = value.text;
-      });
+    final tempQuestion = List<dynamic>.from((RawData[key] as List?) ?? const []);
+    final targetLang = tolang.toString().trim().toLowerCase();
+
+    if (targetLang.isEmpty || targetLang.startsWith('en')) {
+      return tempQuestion;
     }
-    return TempQuestion;
+
+    final translated = await Future.wait<String>(
+      tempQuestion.map((item) async {
+        final text = item.toString();
+        try {
+          final value = await translator.translate(text, to: targetLang);
+          return value.text;
+        } catch (_) {
+          return text;
+        }
+      }),
+    );
+
+    return translated;
   }
 
   bool _isLangsSchemaCacheError(PostgrestException e) {

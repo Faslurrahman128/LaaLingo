@@ -197,7 +197,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                  builder: (context) => RegisterInstructor()),
+                                  builder: (context) => RegisterInstructor(
+                                        dync: widget.dync,
+                                      )),
                             );
                           },
                           child: Text(

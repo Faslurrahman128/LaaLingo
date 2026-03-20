@@ -96,7 +96,10 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
       final slot = getLangSlot(userRow, i);
       final selected = slot?['Selected_lang'];
       if (selected is List && selected.length >= 3) {
-        pokemons.add([i, selected[2]]);
+        final langCode = selected[1].toString().toLowerCase();
+        final rawFlagCode = selected[2].toString();
+        final flagCode = langCode == 'en' ? 'GB' : rawFlagCode;
+        pokemons.add([i, flagCode]);
       }
     }
     for (var i = 0; i < pokemons.length; i++) {
@@ -299,7 +302,7 @@ class _ProfilePageState extends State<ProfilePage> with WidgetsBindingObserver {
                                           width: 28,
                                           height: 28,
                                           child: SvgPicture.asset(
-                                            'assets/flag/${lang[2]}.svg',
+                                            'assets/flag/${(lang.length >= 2 && lang[1].toString().toLowerCase() == 'en') ? 'GB' : lang[2]}.svg',
                                           ),
                                         ),
                                       ),
@@ -499,9 +502,7 @@ List<String> heading = [
 ];
 
 List<dynamic> LangAvail = [
-  ["English", "en", "US"],
-  ["German", "de", "DE"],
-  ["Japanese", "ja", "JP"],
+  ["English", "en", "GB"],
   ["Russian", "ru", "RU"],
   ["Korean", "ko", "KR"],
   ["French", "fr", "PM"],

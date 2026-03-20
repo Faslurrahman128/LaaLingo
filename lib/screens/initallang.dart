@@ -25,9 +25,7 @@ class _RegisterLang extends State<RegisterLang> {
 
   late User _currentUser;
   List<dynamic> LangAvail = [
-    ["English", "en", "US"],
-    ["German", "de", "DE"],
-    ["Japanese", "ja", "JP"],
+    ["English", "en", "GB"],
     ["Russian", "ru", "RU"],
     ["Korean", "ko", "KR"],
     ["French", "fr", "PM"],
