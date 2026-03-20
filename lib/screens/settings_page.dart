@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'language_select_page.dart';
 import 'login_page.dart';
+import 'forgot_password_otp_page.dart';
 import '../supabase_auth.dart';
 import '../supabase_config.dart';
 
@@ -20,24 +21,6 @@ class SettingsPage extends StatelessWidget {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  Future<void> _resetPassword(BuildContext context) async {
-    final email = Supabase.instance.client.auth.currentUser?.email;
-    if (email == null || email.isEmpty) {
-      _showMessage(context, 'No email found for the current user.');
-      return;
-    }
-
-    try {
-      await Supabase.instance.client.auth.resetPasswordForEmail(
-        email,
-        redirectTo: '${Uri.base.origin}/reset-password',
-      );
-      _showMessage(context, 'Password reset email sent to $email');
-    } catch (e) {
-      _showMessage(context, 'Could not send reset email.');
-    }
   }
 
   Future<void> _editDisplayName(BuildContext context) async {
@@ -298,7 +281,13 @@ class SettingsPage extends StatelessWidget {
                 ),
               ),
               trailing: Icon(Icons.chevron_right, color: dync.primary),
-              onTap: () => _resetPassword(context),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ForgotPasswordOtpPage(dync: dync),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 12),
             ListTile(

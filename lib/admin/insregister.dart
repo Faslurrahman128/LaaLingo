@@ -18,6 +18,7 @@ class _RegisterInstructorState extends State<RegisterInstructor> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -105,8 +106,20 @@ class _RegisterInstructorState extends State<RegisterInstructor> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(labelText: 'Password'),
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
                         validator: (v) => Validator.validatePassword(password: v),
                       ),
                       const SizedBox(height: 18),

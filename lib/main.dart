@@ -30,29 +30,49 @@ void main() async {
 class MyApp extends StatelessWidget {
   Map<String, String> _parseFragmentParams(Uri uri) {
     if (uri.fragment.isEmpty) return const {};
+
+    final fragment = uri.fragment;
+    final queryPart = fragment.contains('?')
+        ? fragment.substring(fragment.indexOf('?') + 1)
+        : (fragment.startsWith('/') ? '' : fragment);
+
+    if (queryPart.isEmpty) return const {};
+
     try {
-      return Uri.splitQueryString(uri.fragment);
+      return Uri.splitQueryString(queryPart);
     } catch (_) {
       return const {};
     }
   }
 
+  String _fragmentPath(Uri uri) {
+    final fragment = uri.fragment;
+    if (fragment.isEmpty) return '';
+    if (!fragment.startsWith('/')) return '';
+
+    final qIndex = fragment.indexOf('?');
+    if (qIndex == -1) return fragment;
+    return fragment.substring(0, qIndex);
+  }
+
   Map<String, dynamic> _extractRecovery(Uri uri) {
     final fragmentParams = _parseFragmentParams(uri);
+    final fragmentPath = _fragmentPath(uri);
+
     final accessToken =
         uri.queryParameters['access_token'] ?? fragmentParams['access_token'] ?? '';
     final refreshToken =
         uri.queryParameters['refresh_token'] ?? fragmentParams['refresh_token'] ?? '';
     final type = uri.queryParameters['type'] ?? fragmentParams['type'] ?? '';
-    final isRecoveryRoute = uri.path == '/reset-password';
+    final isRecoveryRoute =
+        uri.path == '/reset-password' || fragmentPath == '/reset-password';
     final isRecoveryType = type.toLowerCase() == 'recovery';
 
     return {
       'accessToken': accessToken,
       'refreshToken': refreshToken,
       'isRecovery': (isRecoveryRoute || isRecoveryType) &&
-          accessToken.isNotEmpty &&
-          refreshToken.isNotEmpty,
+          accessToken.isNotEmpty,
     };
   }
 

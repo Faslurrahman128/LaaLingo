@@ -22,6 +22,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _focusEmail = FocusNode();
   final _focusPassword = FocusNode();
   bool _isProcessing = false;
+  bool _obscurePassword = true;
 
   void displayMessage(String message) {
     if (!mounted) return;
@@ -137,7 +138,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           child: TextFormField(
                             controller: _passwordTextController,
                             focusNode: _focusPassword,
-                            obscureText: true,
+                            obscureText: _obscurePassword,
                             validator: (value) => Validator.validatePassword(
                               password: value,
                             ),
@@ -146,6 +147,19 @@ class _RegisterPageState extends State<RegisterPage> {
                                 hintStyle: TextStyle(
                                     fontSize: 16, color: widget.dync.primary),
                                 hintText: "Your Password",
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: widget.dync.primary,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
                                 focusedBorder: InputBorder.none,
                                 border: InputBorder.none),
                             style: TextStyle(color: Colors.black),

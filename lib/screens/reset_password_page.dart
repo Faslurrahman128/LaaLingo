@@ -18,6 +18,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   bool _loading = false;
   String? _error;
   bool _sessionReady = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -112,10 +114,21 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       const SizedBox(height: 32),
                       TextFormField(
                         controller: _passwordController,
-                        obscureText: true,
+                        obscureText: _obscurePassword,
                         decoration: const InputDecoration(
                           labelText: 'New Password',
                           border: OutlineInputBorder(),
+                        ).copyWith(
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -129,10 +142,23 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _confirmPasswordController,
-                        obscureText: true,
+                        obscureText: _obscureConfirmPassword,
                         decoration: const InputDecoration(
                           labelText: 'Confirm Password',
                           border: OutlineInputBorder(),
+                        ).copyWith(
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirmPassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureConfirmPassword = !_obscureConfirmPassword;
+                              });
+                            },
+                          ),
                         ),
                         validator: (value) {
                           if (value != _passwordController.text) {

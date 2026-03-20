@@ -18,6 +18,7 @@ class _InsloginState extends State<Inslogin> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -94,8 +95,20 @@ class _InsloginState extends State<Inslogin> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(labelText: 'Password'),
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
                         validator: (v) => Validator.validatePassword(password: v),
                       ),
                       const SizedBox(height: 18),

@@ -3,6 +3,7 @@ import 'package:LaaLingo/ResourcePage/Resource.dart';
 import 'package:LaaLingo/admin/inshome.dart';
 import 'package:LaaLingo/admin/inslogin.dart';
 import 'package:LaaLingo/screens/register_page.dart';
+import 'package:LaaLingo/screens/forgot_password_otp_page.dart';
 import 'package:LaaLingo/utils/validator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:LaaLingo/app_config.dart';
@@ -18,87 +19,13 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-      Future<void> _magicLinkDialog(BuildContext context) async {
-        final emailController = TextEditingController();
-        final result = await showDialog<String>(
-          context: context,
-          builder: (ctx) {
-            return AlertDialog(
-              title: const Text('Magic Link Login'),
-              content: TextField(
-                controller: emailController,
-                decoration: const InputDecoration(hintText: 'Enter your email'),
-                keyboardType: TextInputType.emailAddress,
-                autofocus: true,
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.of(ctx).pop(emailController.text.trim()),
-                  child: const Text('Send Link'),
-                ),
-              ],
-            );
-          },
-        );
-        final email = result?.trim() ?? '';
-        if (email.isEmpty) return;
-        try {
-          await Supabase.instance.client.auth.signInWithOtp(email: email);
-          displayMessage('Magic link sent to $email. Check your inbox.');
-        } catch (e, stack) {
-          displayMessage('Could not send magic link.\n${e.toString()}\n$stack');
-        }
-      }
-    Future<void> _resetPasswordDialog(BuildContext context) async {
-      final emailController = TextEditingController();
-      final result = await showDialog<String>(
-        context: context,
-        builder: (ctx) {
-          return AlertDialog(
-            title: const Text('Reset Password'),
-            content: TextField(
-              controller: emailController,
-              decoration: const InputDecoration(hintText: 'Enter your email'),
-              keyboardType: TextInputType.emailAddress,
-              autofocus: true,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(ctx).pop(emailController.text.trim()),
-                child: const Text('Send'),
-              ),
-            ],
-          );
-        },
-      );
-      final email = result?.trim() ?? '';
-      if (email.isEmpty) return;
-      try {
-        await Supabase.instance.client.auth.resetPasswordForEmail(
-          email,
-          redirectTo: '${Uri.base.origin}/reset-password',
-        );
-        displayMessage('If this email exists, a password reset link was sent.');
-      } on AuthException catch (e) {
-        displayMessage('Could not send reset email.\n${e.message}');
-      } catch (e, stack) {
-        displayMessage('Could not send reset email.\n$e\n$stack');
-      }
-    }
   final _formKey = GlobalKey<FormState>();
   final _emailTextController = TextEditingController();
   final _passwordTextController = TextEditingController();
   final _focusEmail = FocusNode();
   final _focusPassword = FocusNode();
   bool _isProcessing = false;
+  bool _obscurePassword = true;
 
   void displayMessage(String message) {
     if (!mounted) return;
@@ -119,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
       if (AppConfig.requireEmailConfirmation) {
         return 'Please confirm your email, then log in.';
       }
-      return 'Email not confirmed. For now, disable email confirmation in Supabase Auth settings (or confirm via inbox).';
+      return 'Email not confirmed. Please check your inbox.';
     }
     if (lower.contains('rate limit')) {
       return 'Too many attempts. Please wait a bit and try again.';
@@ -193,7 +120,7 @@ class _LoginPageState extends State<LoginPage> {
             child: TextFormField(
               controller: _passwordTextController,
               focusNode: _focusPassword,
-              obscureText: true,
+              obscureText: _obscurePassword,
               validator: (value) => Validator.validatePassword(
                 password: value,
               ),
@@ -202,6 +129,17 @@ class _LoginPageState extends State<LoginPage> {
                   hintStyle:
                       TextStyle(fontSize: 16, color: widget.dync.primary),
                   hintText: "Your Password",
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      color: widget.dync.primary,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
                   focusedBorder: InputBorder.none,
                   border: InputBorder.none),
               style: TextStyle(color: Colors.black),
@@ -210,7 +148,13 @@ class _LoginPageState extends State<LoginPage> {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: () => _resetPasswordDialog(context),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ForgotPasswordOtpPage(dync: widget.dync),
+                  ),
+                );
+              },
               child: const Text('Forgot Password?'),
             ),
           ),
@@ -243,17 +187,6 @@ class _LoginPageState extends State<LoginPage> {
                     "Register",
                     style: TextStyle(color: Color.fromARGB(200, 139, 61, 241)),
                   )),
-            ],
-          ),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text("Or log in with a magic link: "),
-              TextButton(
-                onPressed: () => _magicLinkDialog(context),
-                child: const Text('Send Magic Link'),
-              ),
             ],
           ),
           SizedBox(height: 2),
