@@ -22,6 +22,26 @@ class _FillInBlanksPageState extends State<FillInBlanksPage> {
   int _current = 0;
   int _score = 0;
   bool _finished = false;
+  // Reference categories from Reading.dart
+  final List<String> _categories = [
+    "Basic_Words",
+    "MCQ/Match Exercise",
+    "Numbers",
+    "Fill in the Blanks",
+    "Colors_Data",
+    "Puzzles Exercise",
+    "Food_Data",
+    "Animals_Data",
+    "Vocabulary",
+    "Everyday_Essentials",
+    "Travel_Talk",
+    "Grammar_and_Usage_Drill",
+    "Phrases and Expressions",
+    "Grammar",
+    "Dialogues and Conversations",
+    "Image Based Questions",
+    "Cultural Insights",
+  ];
   String? _selected;
 
   @override
@@ -134,6 +154,19 @@ class _FillInBlanksPageState extends State<FillInBlanksPage> {
     setState(() {
       if (_current >= _order.length - 1) {
         _finished = true;
+        // Unlock the next reading task
+        final currentTask = "Fill in the Blanks";
+        final readingIndex = _categories.indexOf(currentTask);
+        if (readingIndex >= 0) {
+          final currentUnlocked = box.get('unlocked_reading_task_index');
+          final unlocked = (currentUnlocked is num)
+              ? currentUnlocked.toInt()
+              : int.tryParse(currentUnlocked?.toString() ?? '') ?? 0;
+          if (readingIndex >= unlocked) {
+            final next = (readingIndex + 1).clamp(0, _categories.length - 1);
+            box.put('unlocked_reading_task_index', next);
+          }
+        }
       } else {
         _current += 1;
         _selected = null;

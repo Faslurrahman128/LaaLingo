@@ -90,6 +90,7 @@ class _IndProgressState extends State<IndProgress> {
                                         builder: (context) => questionsUi(
                                               topic: Vocabulary_Key[Index],
                                               dync: widget.dync,
+                                              categories: Vocabulary_Key,
                                             )))
                               };
                       },

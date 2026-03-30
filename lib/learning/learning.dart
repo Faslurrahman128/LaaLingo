@@ -1,3 +1,4 @@
+import 'package:LaaLingo/screens/RLSW/Reading.dart';
 import 'dart:convert';
 import 'dart:math';
 
@@ -15,32 +16,19 @@ import 'package:LaaLingo/supabase_langs.dart';
 
 double height = 250;
 
+
 class questionsUi extends StatefulWidget {
   final String topic;
   late ColorScheme dync;
-  questionsUi({required this.topic, required this.dync});
+  final List<String> categories;
+  questionsUi({required this.topic, required this.dync, required this.categories});
 
   @override
   State<questionsUi> createState() => _questionsUiState();
 }
 
 class _questionsUiState extends State<questionsUi> {
-  static const List<String> _readingTaskOrder = [
-    "Basic_Words",
-    "Numbers",
-    "Colors_Data",
-    "Food_Data",
-    "Animals_Data",
-    "Vocabulary",
-    "Everyday_Essentials",
-    "Travel_Talk",
-    "Grammar_and_Usage_Drill",
-    "Phrases and Expressions",
-    "Grammar",
-    "Dialogues and Conversations",
-    "Cultural Insights",
-    "Fill in the Blanks",
-  ];
+  // Use categories from widget for unlock logic
 
   static const List<String> _quizTaskOrder = [
     "Basic_Words",
@@ -182,15 +170,15 @@ class _questionsUiState extends State<questionsUi> {
 
   void _unlockNextTaskAfterCompletion() {
     final currentTopic = widget.topic;
-
-    final readingIndex = _readingTaskOrder.indexOf(currentTopic);
+    final categories = widget.categories;
+    final readingIndex = categories.indexOf(currentTopic);
     if (readingIndex >= 0) {
       final currentUnlocked = box.get('unlocked_reading_task_index');
       final unlocked = (currentUnlocked is num)
           ? currentUnlocked.toInt()
           : int.tryParse(currentUnlocked?.toString() ?? '') ?? 0;
       if (readingIndex >= unlocked) {
-        final next = (readingIndex + 1).clamp(0, _readingTaskOrder.length - 1);
+        final next = (readingIndex + 1).clamp(0, categories.length - 1);
         box.put('unlocked_reading_task_index', next);
       }
     }
@@ -481,11 +469,12 @@ class _questionsUiState extends State<questionsUi> {
 
                     _unlockNextTaskAfterCompletion();
                     prog.progress_update(0);
-                    Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) => IndProgress(
-                              data: widget.topic,
-                              dync: widget.dync,
-                            )));
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => Reading(dync: widget.dync),
+                      ),
+                      (route) => route.isFirst,
+                    );
                   },
                   child: Container(
                     margin: EdgeInsets.all(0),

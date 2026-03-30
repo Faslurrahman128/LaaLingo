@@ -6,6 +6,9 @@ import 'package:LaaLingo/learning/progress.dart';
 import 'package:LaaLingo/learning/learning.dart';
 import 'package:LaaLingo/progress_brain.dart/progress.dart';
 import 'package:LaaLingo/screens/RLSW/fill_in_blanks.dart';
+import 'package:LaaLingo/screens/RLSW/mcq_match.dart';
+import 'package:LaaLingo/screens/RLSW/image_based_questions.dart';
+import 'package:LaaLingo/screens/RLSW/puzzles_exercise.dart';
 
 class Reading extends StatefulWidget {
   late ColorScheme dync;
@@ -48,92 +51,118 @@ class _ReadingState extends State<Reading> {
           ),
           Expanded(
             child: ListView.builder(
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  final rawUnlocked = box.get('unlocked_reading_task_index');
-                  final unlockedIndex = (rawUnlocked is num)
-                      ? rawUnlocked.toInt()
-                      : int.tryParse(rawUnlocked?.toString() ?? '') ?? 0;
-                  final isUnlocked = index <= unlockedIndex;
+              itemCount: categories.length,
+              itemBuilder: (context, index) {
+                final rawUnlocked = box.get('unlocked_reading_task_index');
+                final unlockedIndex = (rawUnlocked is num)
+                    ? rawUnlocked.toInt()
+                    : int.tryParse(rawUnlocked?.toString() ?? '') ?? 0;
+                final isUnlocked = index <= unlockedIndex;
 
-                  return GestureDetector(
-                    onTap: () {
-                      isUnlocked
-                          ? {
-                              categories[index] == 'Fill in the Blanks'
-                                  ? Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) => FillInBlanksPage(
-                                          dync: widget.dync,
-                                        ),
-                                      ),
-                                    )
-                                  : Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) => questionsUi(
-                                          topic: categories[index],
-                                          dync: widget.dync,
-                                        ),
-                                      ),
-                                    )
-                            }
-                          : {};
-                    },
-                    child: !isUnlocked
-                        ? Stack(
-                            children: [
-                              Container(
+                return GestureDetector(
+                  onTap: () async {
+                    if (!isUnlocked) return;
+                    if (categories[index] == 'Fill in the Blanks') {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => FillInBlanksPage(
+                            dync: widget.dync,
+                          ),
+                        ),
+                      );
+                    } else if (categories[index] == 'MCQ/Match Exercise') {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => McqMatchPage(
+                            dync: widget.dync,
+                          ),
+                        ),
+                      );
+                    } else if (categories[index] == 'Image Based Questions') {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ImageBasedQuestionsPage(
+                            dync: widget.dync,
+                          ),
+                        ),
+                      );
+                    } else if (categories[index] == 'Puzzles Exercise') {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => PuzzlesExercisePage(
+                            dync: widget.dync,
+                          ),
+                        ),
+                      );
+                    } else {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => questionsUi(
+                            topic: categories[index],
+                            dync: widget.dync,
+                            categories: categories,
+                          ),
+                        ),
+                      );
+                    }
+                    setState(() {}); // Refresh unlock status after returning
+                  },
+                  child: !isUnlocked
+                      ? Stack(
+                          children: [
+                            Container(
+                                margin: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                    color: widget.dync.background,
+                                    borderRadius: BorderRadius.all(
+                                        Radius.circular(30))),
+                                width: double.infinity,
+                                height:
+                                    MediaQuery.of(context).size.height / 10,
+                                child: Center(
+                                  child: Text(
+                                    categories[index],
+                                    style: TextStyle(
+                                        color: widget.dync.secondary,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 17),
+                                  ),
+                                )),
+                            Opacity(
+                              opacity: 0.9,
+                              child: Container(
                                   margin: EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                      color: widget.dync.background,
+                                      color: widget.dync.primary,
                                       borderRadius: BorderRadius.all(
-                                          Radius.circular(30))),
+                                          Radius.circular(10))),
                                   width: double.infinity,
                                   height:
                                       MediaQuery.of(context).size.height / 10,
-                                  child: Center(
-                                    child: Text(
-                                      categories[index],
-                                      style: TextStyle(
-                                          color: widget.dync.secondary,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 17),
-                                    ),
-                                  )),
-                              Opacity(
-                                opacity: 0.9,
-                                child: Container(
-                                    margin: EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                        color: widget.dync.primary,
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(10))),
-                                    width: double.infinity,
-                                    height:
-                                        MediaQuery.of(context).size.height / 10,
-                                    child: Center(child: Icon(Icons.lock))),
-                              ),
-                            ],
-                          )
-                        : Container(
-                            margin: EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                                color: widget.dync.primary,
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10))),
-                            width: double.infinity,
-                            height: MediaQuery.of(context).size.height / 10,
-                            child: Center(
-                              child: Text(
-                                categories[index],
-                                style: TextStyle(
-                                    color: widget.dync.secondaryContainer,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 20),
-                              ),
-                            )),
-                  );
-                }),
+                                  child: Center(child: Icon(Icons.lock))),
+                            ),
+                          ],
+                        )
+                      : Container(
+                          margin: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                              color: widget.dync.primary,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10))),
+                          width: double.infinity,
+                          height: MediaQuery.of(context).size.height / 10,
+                          child: Center(
+                            child: Text(
+                              categories[index],
+                              style: TextStyle(
+                                  color: widget.dync.secondaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20),
+                            ),
+                          )),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -170,8 +199,11 @@ class TopheadCLipper extends CustomClipper<Path> {
 
 List<String> categories = [
   "Basic_Words",
+  "MCQ/Match Exercise",
   "Numbers",
+  "Fill in the Blanks",
   "Colors_Data",
+  "Puzzles Exercise",
   "Food_Data",
   "Animals_Data",
   "Vocabulary",
@@ -181,6 +213,6 @@ List<String> categories = [
   "Phrases and Expressions",
   "Grammar",
   "Dialogues and Conversations",
+  "Image Based Questions",
   "Cultural Insights",
-  "Fill in the Blanks",
 ];
